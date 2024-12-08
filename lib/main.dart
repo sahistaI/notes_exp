@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:notes_exp/add_note.dart';
+import 'package:notes_exp/db_provider.dart';
 import 'package:notes_exp/detail_page.dart';
 import 'package:notes_exp/home_page.dart';
+import 'package:path/path.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp (ChangeNotifierProvider(create: (context)=>DbProvider(),
+  child: MyApp(),));
 }
 
 class MyApp extends StatelessWidget {

@@ -9,41 +9,44 @@ import 'package:provider/provider.dart';
 
 import 'db_provider.dart';
 
-class AddNote extends StatefulWidget{
+class UpdateNotePage extends StatefulWidget{
 
+  final NoteModel updatenote;
+
+  const UpdateNotePage ({Key? key,required this.updatenote}) : super(key: key);
 
   @override
-  State<AddNote> createState() => _AddNoteState();
+  State<UpdateNotePage> createState() => _UpdateNoteState();
 }
 
-class _AddNoteState extends State<AddNote> {
+class _UpdateNoteState extends State<UpdateNotePage> {
 
   TextEditingController titleController = TextEditingController();
   TextEditingController descController = TextEditingController();
 
- DbHelper dbHelper =DbHelper.getInstance();
- List<NoteModel> mData = [];
+  DbHelper dbHelper =DbHelper.getInstance();
+  List<NoteModel> mData = [];
 
-@override
+  @override
   void initState(){
     super.initState();
-  /*  titleController.text = widget.addnote.title;
-    descController.text = widget.addnote.desc;
-*/
     context.read<DbProvider>().getInitialNotes();
-}
+    titleController.text = widget.updatenote.title;
+    descController.text = widget.updatenote.desc;
+
+  }
 
   @override
   Widget build(BuildContext context) {
 
-  mData = context.watch<DbProvider>().getAllNotes();
+    mData = context.watch<DbProvider>().getAllNotes();
 
 
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-          title:Text('Add Note'),
+        title:Text('Edit Note'),
       ),
 
       body: Padding(
@@ -55,17 +58,16 @@ class _AddNoteState extends State<AddNote> {
               child: TextField(
                 controller: titleController,
                 maxLines: 2,
-                minLines: 1,
-                autofocus: true,
+                minLines: 2,
                 decoration: InputDecoration(
-              hintText: "Title",hintStyle:TextStyle(fontSize: 21),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11)
-              )
-                      ),
+                    hintText: "Title",hintStyle:TextStyle(fontSize: 21),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(11)
+                    )
+                ),
               ),
             ),
             Padding(
@@ -94,33 +96,31 @@ class _AddNoteState extends State<AddNote> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  OutlinedButton(onPressed:() {
+                  OutlinedButton(onPressed:() async{
 
-                    String title = titleController.text.trim();
-                    String desc = descController.text.trim();
+                    String updatedTitle = titleController.text.trim();
+                    String updatedDesc = descController.text.trim();
 
-                    if(title.isEmpty || desc.isEmpty){
-
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:
-                      Text("Title & Description cannot be empty"),backgroundColor: Colors.red,));
-
-                      return;
+                    if(updatedTitle.isNotEmpty && updatedDesc.isNotEmpty){
+                      context.read<DbProvider>().updateNote(updatenote: NoteModel(
+                          id: widget.updatenote.id!,
+                          title: updatedTitle,
+                          desc: updatedDesc,
+                          createdAt: widget.updatenote.createdAt));
+                      Navigator.pop(context,NoteModel(
+                          id: widget.updatenote.id!,
+                          title: updatedTitle,
+                          desc: updatedDesc,
+                          createdAt: widget.updatenote.createdAt)); // Return update note
+                    } else{
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Title & Desc cannot be empty")));
                     }
-                    // Add a new note
-
-                     context.read<DbProvider>().addNote(note: NoteModel(
-                        title: title,
-                        desc: desc,
-                        createdAt: DateTime.now().millisecondsSinceEpoch.toString()));
-
-                   // Navigate prev screen
-                    Navigator.pop(context);
 
                   }, child: Text("Save",style: TextStyle(fontSize:18),)),
 
                   SizedBox(width: 15,),
                   OutlinedButton(onPressed:(){
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>HomePage()));
+                    Navigator.pop(context);
                   }, child: Text("Cancel",style: TextStyle(fontSize:18),)),
                 ],
               ),

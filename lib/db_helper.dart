@@ -16,7 +16,7 @@ static final String TABLE_NOTE = "dbnote";
 static final String NOTE_COLUMN_ID = "n_id";
 static final String NOTE_COLUMN_TITLE = "n_title";
 static final String NOTE_COLUMN_DESC = "n_desc";
-//static final String NOTE_COLUMN_CREATE_AT = "n_desc";
+static final String NOTE_COLUMN_CREATE_AT = "n_createAt";
 
 
 
@@ -33,7 +33,7 @@ Future<Database> openDB() async{
 
   return openDatabase(dbPath, version: 1, onCreate:(db, version){
   print("db Created");
-  db.execute("create table note ( n_id integer primary key autoincrement, n_title text, n_desc text)");
+  db.execute("create table $TABLE_NOTE ( $NOTE_COLUMN_ID integer primary key autoincrement, $NOTE_COLUMN_TITLE text, $NOTE_COLUMN_DESC text, $NOTE_COLUMN_CREATE_AT text)");
 
   });
 
@@ -41,29 +41,30 @@ Future<Database> openDB() async{
 
   //insert
 
-  Future<bool> addNote({required String title, required String desc}) async {
+  Future<bool> addNote(NoteModel newNote) async {
     Database db = await initDB();
 
-    int rowsEffected = await db.insert("note", {
-      "n_title": title,
-      "n_desc": desc,
-
-    });
+    int rowsEffected = await db.insert(TABLE_NOTE, newNote.toMap());
 
     return rowsEffected > 0;
   }
 
 // select
 
-  Future<List<Map<String,dynamic>>> fetchNote() async {
+  Future<List<NoteModel>> fetchNote() async {
 
     Database db = await initDB();
+    List<NoteModel> mNotes = [];
 
-    List<Map<String,dynamic>> allNotes = await  db.query("note");
+    List<Map<String,dynamic>> allNotes = await db.query(TABLE_NOTE);
 
-    return allNotes;
+    for(Map<String,dynamic> eachData in allNotes){
+    NoteModel eachNote = NoteModel.fromMap(eachData);
+    mNotes.add(eachNote);
 
+    }
 
+    return mNotes;
   }
 
   // update
@@ -73,10 +74,10 @@ Future<Database> openDB() async{
 
     Database db = await initDB();
 
-    int rowsEffected = await db.update("note", {
-      "n_title": title,
-      "n_desc": desc,
-    },where: "n_id = $id");
+    int rowsEffected = await db.update(TABLE_NOTE, {
+      NOTE_COLUMN_TITLE: title,
+      NOTE_COLUMN_DESC: desc,
+    },where: "$NOTE_COLUMN_ID = $id");
 
     return rowsEffected>0;
 
@@ -87,7 +88,7 @@ Future<Database> openDB() async{
 
     Database db = await initDB();
 
-    int rowsEffected = await db.delete("note",where: "n_id =?", whereArgs:['$id'] );
+    int rowsEffected = await db.delete(TABLE_NOTE,where: "$NOTE_COLUMN_ID =?", whereArgs:['$id'] );
 
     return rowsEffected>0;
 

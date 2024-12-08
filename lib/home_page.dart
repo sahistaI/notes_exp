@@ -1,12 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:notes_exp/add_note.dart';
+import 'package:notes_exp/db_provider.dart';
 import 'package:notes_exp/detail_page.dart';
+import 'package:notes_exp/note_model.dart';
+import 'package:provider/provider.dart';
 
 import 'db_helper.dart';
 
 class HomePage extends StatefulWidget{
+
+
+
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -18,27 +25,25 @@ class _HomePageState extends State<HomePage> {
   TextEditingController descController = TextEditingController();
 
   DbHelper dbHelper = DbHelper.getInstance();
-  List<Map<String, dynamic>> mData = [];
+  List<NoteModel> mData = [];
+
+  DateFormat dtFormat = DateFormat.MMMMEEEEd();
 
 
   @override
   void initState() {
     super.initState();
+    context.read<DbProvider>().getInitialNotes();
 
-    dbHelper.fetchNote();
-    getNotes();
   }
 
-  void getNotes() async {
-    mData = await dbHelper.fetchNote();
-    setState(() {
-
-    });
-  }
 
 
   @override
   Widget build(BuildContext context) {
+
+    mData = context.watch<DbProvider>().getAllNotes();
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -58,15 +63,14 @@ class _HomePageState extends State<HomePage> {
             itemCount: mData.length,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          crossAxisSpacing: 16.0,
+          crossAxisSpacing: 12.0,
           mainAxisSpacing: 16.0,
         ), itemBuilder: (context,index){
     return InkWell(
     onTap: (){
-    Navigator.pushReplacement(context, MaterialPageRoute(builder:
+    Navigator.push(context, MaterialPageRoute(builder:
     (context)=>DetailPage(
-    title: mData[index]["n_title"],
-    desc: mData[index]["n_desc"],
+      updatenote: mData[index],
     )
     ));
     },
@@ -77,14 +81,17 @@ class _HomePageState extends State<HomePage> {
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Text(mData[index]["n_title"],style: (TextStyle(fontSize: 21)),),
-                Text(mData[index]["n_desc"],style: (TextStyle(fontSize:15))),
+            child: Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(mData[index].title,style: (TextStyle(fontSize: 21)),overflow: TextOverflow.ellipsis,maxLines:1,),
+                  Text(mData[index].desc,style: (TextStyle(fontSize:15))),
+                  Text(dtFormat.format(DateTime.fromMillisecondsSinceEpoch(int.parse(mData[index].createdAt)))),
 
-              ],
+                ],
+              ),
             ),
         )
           );
@@ -94,8 +101,8 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(25.0),
         child: FloatingActionButton(
           onPressed: (){
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>AddNote()),
-            ).then((_)=>getNotes());
+            Navigator.push(context, MaterialPageRoute(builder: (context)=>AddNote()),
+            );
           },
           child: Icon(Icons.add),
         ),
